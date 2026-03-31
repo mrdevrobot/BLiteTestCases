@@ -7,7 +7,7 @@ internal class Program
     private static async Task Main(string[] args)
     {
         using var db = new DeviceDbContext("global.db");
-        const string targetId = "L0JRaD_5";
+        var targetId = (await db.Devices.AsQueryable().FirstOrDefaultAsync())?.Id ?? throw new Exception("No devices found in the database.");
         for (var i = 1; i <= 3; i++)
         {
             var device = i switch
