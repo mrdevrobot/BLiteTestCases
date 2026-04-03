@@ -10,13 +10,11 @@ using LiteDB;
 
 namespace PerformanceBenchmark;
 
-// LaunchCount=2, run 2 processes, take the second result, the cold start effect basically disappears
-[SimpleJob(2, 5, 10, id: "FastAndAccurate")]
-// [ShortRunJob]
-// [InProcess]
+// Start 3 processes, each process runs only 1 Iteration, no warm-up!
+[SimpleJob(3, 0, 1, id: "ColdStart")]
 [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
 [JsonExporterAttribute.Full]
-public class ReadBenchmark
+public class ReadBenchmark_Cold
 {
     private BenchmarkBLiteDbContext _bliteDb = null!;
     private string _bliteDbPath = null!;
@@ -30,7 +28,7 @@ public class ReadBenchmark
 
     [Params(20)] public int TotalFolders;
 
-    [Params(5_000)] public int TotalPhotos;
+    [Params(5000)] public int TotalPhotos;
 
     [GlobalSetup]
     public void Setup()
@@ -64,6 +62,9 @@ public class ReadBenchmark
         _liteDb.Commit();
 
         _bliteDb = new BenchmarkBLiteDbContext(_bliteDbPath);
+        _bliteDb.Photos.EnsureIndexAsync(x => x.Id, unique: true).GetAwaiter().GetResult();
+        _bliteDb.Photos.EnsureIndexAsync(x => x.FilePath, unique: true).GetAwaiter().GetResult();
+        _bliteDb.Photos.EnsureIndexAsync(x => x.SourceId).GetAwaiter().GetResult();
         _bliteDb.Photos.InsertBulkAsync(photos).GetAwaiter().GetResult();
         _bliteDb.SaveChangesAsync().GetAwaiter().GetResult();
 
@@ -128,26 +129,6 @@ public class ReadBenchmark
     [Benchmark(Description = "BLite: Query by FilePath (1-to-1)")]
     [BenchmarkCategory("1-to-1")]
     public async Task BLite_QueryByFilePath()
-    {
-        foreach (var filePath in _sampleFilePaths)
-        {
-            var result = await _bliteDb.Photos.FindOneAsync(x => x.FilePath == filePath);
-        }
-    }
-
-    [Benchmark(Description = "BLite: Query by FilePath Via FirstOrDefaultAsync (1-to-1)")]
-    [BenchmarkCategory("1-to-1")]
-    public async Task BLite_QueryByFilePathViaFirstOrDefault()
-    {
-        foreach (var filePath in _sampleFilePaths)
-        {
-            var result = await _bliteDb.Photos.AsQueryable().FirstOrDefaultAsync(x => x.FilePath == filePath);
-        }
-    }
-
-    [Benchmark(Description = "BLite: Query by FilePath Via FindAsync & FirstOrDefaultAsync (1-to-1)")]
-    [BenchmarkCategory("1-to-1")]
-    public async Task BLite_QueryByFilePathViaFindAndFirstOrDefault()
     {
         foreach (var filePath in _sampleFilePaths)
         {

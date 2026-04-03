@@ -18,6 +18,9 @@ internal class Program
         Console.WriteLine("\n[1] Initiating Read Query Performance Benchmark (ReadBenchmark)...");
         var readSummary = BenchmarkRunner.Run<ReadBenchmark>(BenchmarkConfig.Get());
 
+        // Console.WriteLine("\n[1] Initiating Read Query Performance Benchmark (ReadBenchmark_Cold)...");
+        // var readSummary_Cold = BenchmarkRunner.Run<ReadBenchmark_Cold>(BenchmarkConfig.Get());
+
         Console.WriteLine($"| Number of successfully executed use cases: {readSummary.BenchmarksCases.Length}");
         Console.WriteLine($"| Total running time of the test engine: {readSummary.TotalTime.TotalMinutes:F2} minutes");
 
